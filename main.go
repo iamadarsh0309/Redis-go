@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"log"
@@ -15,12 +16,15 @@ const (
 	ARRAY ValueType = "*"
 	BULK ValueType = "$"
 	STRING ValueType = "+"
+	ERROR ValueType = "-"
+	NULL ValueType = ""
 )
 
 type Value struct {
 	typ ValueType
 	bulk string
 	str string
+	err string
 	array []Value
 }
 
@@ -76,15 +80,56 @@ func main() {
 	defer conn.Close()
 
 	for {
-	v:= Value{typ: "ARRAY"}
+	v:= Value{typ: "ARRAY"} //RESP Protocol always sends an array
 	v.readArray(conn)
 
 
 	fmt.Println(v.array)
-	
+
 
 	conn.Write([]byte("+OK\r\n"))
 
 }
 
+}
+
+type Handler func(*Value) *Value
+
+var Handlers = map[string]Handler{}
+
+func handle(conn net.Conn, v *Value){
+	cmd := v.array[0].bulk
+	handler, ok := Handlers[cmd]
+	if !ok {
+		fmt.Println("invalid command")
+		return
+	}
+	reply :=  handler(v)
+	w:= NewWriter(conn)
+	w.Write(reply)
+
+}
+
+type Writer struct {
+	writer io.Writer
+}
+
+func NewWriter(w io.Writer) *Writer {
+	return &Writer{writer: bufio.NewWriter(w)}
+}
+
+func (w *Writer) Write(v *Value) {
+	var reply string
+	switch v.typ {
+	case STRING:
+		reply= fmt.Sprintf("%s%s\r\n", v.typ, v.str)
+	case BULK:
+		reply = fmt.Sprintf("%s%d\r\n%s\r\n", v.typ, len(v.bulk), v.bulk)
+	case ERROR:
+		reply=fmt.Sprintf("%s%s\r\n", v.typ, v.err)
+	case NULL:
+		reply=fmt.Sprintf("$-1\r\n")
+	}
+
+	w.writer.Write([]byte(reply))
 }
