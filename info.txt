@@ -1,0 +1,12 @@
+Data persistence :
+2 ways -:
+
+-AOF (Append only File)
+    -Records each SET command as a RESP string
+    -Append to the AOF File
+    -Restore: take all RESP strings, parse them, and re-run all SET commands
+
+-RDB (Redis Database Backup)
+    -keys,values in memory
+    -convert to bytes
+    -save them in backup.rdb

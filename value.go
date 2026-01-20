@@ -24,19 +24,24 @@ type Value struct {
 	array []Value
 }
 
-func (v *Value) readArray(reader io.Reader) {
+func (v *Value) readArray(reader io.Reader) error {
 	buf := make([]byte, 4)
-	reader.Read(buf)
+	_, err := reader.Read(buf)
+	if err != nil {
+		return err
+	}
 	arrLen, err := strconv.Atoi(string(buf[1]))
 	if err != nil {
 		fmt.Println(err)
-		return
+		return err
 	}
 
 	for range arrLen {
 		bulk := v.readBulk(reader)
 		v.array = append(v.array, bulk)
 	}
+
+	return nil
 
 }
 
