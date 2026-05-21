@@ -1,0 +1,29 @@
+# Personal study/learning notes — kept local only
+docs/
+
+# Build artifacts
+/redis-go
+/bin/
+*.exe
+*.test
+*.out
+
+# Go
+vendor/
+*.prof
+coverage.txt
+coverage.html
+
+# Runtime data
+data/
+*.aof
+*.rdb
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+.zshrc
+
+# Local config overrides
+*.local.conf
